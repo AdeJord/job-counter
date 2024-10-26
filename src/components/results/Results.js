@@ -46,21 +46,21 @@ function Results({ data }) {
     });
 
   // Download the data as an Excel file
-  const handleDownload = () => {
-    const wb = XLSX.utils.book_new();
-    const wsData = [['Inspector', 'Total Jobs', 'Average Jobs Per Day']]; // Header row
-    Object.entries(data || {})
-      .filter(([inspector]) => allowedInspectors.includes(inspector)) // Ensure only filtered data is downloaded
-      .forEach(([inspector, stats]) => {
-        wsData.push([inspector, stats.totalJobs, stats.avgJobsPerDay]);
-      });
+//   const handleDownload = () => {
+//     const wb = XLSX.utils.book_new();
+//     const wsData = [['Inspector', 'Total Jobs', 'Average Jobs Per Day']]; // Header row
+//     Object.entries(data || {})
+//       .filter(([inspector]) => allowedInspectors.includes(inspector)) // Ensure only filtered data is downloaded
+//       .forEach(([inspector, stats]) => {
+//         wsData.push([inspector, stats.totalJobs, stats.avgJobsPerDay]);
+//       });
 
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-    XLSX.utils.book_append_sheet(wb, ws, 'Inspector Data');
+//     const ws = XLSX.utils.aoa_to_sheet(wsData);
+//     XLSX.utils.book_append_sheet(wb, ws, 'Inspector Data');
 
-    const xlsxBlob = XLSX.write(wb, { bookType: 'xlsx', type: 'blob' });
-    saveAs(xlsxBlob, 'results.xlsx');
-  };
+//     const xlsxBlob = XLSX.write(wb, { bookType: 'xlsx', type: 'blob' });
+//     saveAs(xlsxBlob, 'results.xlsx');
+//   };
 
   // Check if there is any data before rendering the table
   if (!data || Object.keys(data).length === 0) {
