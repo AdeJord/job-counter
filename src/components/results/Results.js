@@ -3,6 +3,15 @@ import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
 
 function Results({ data }) {
+  // List of inspectors to include
+  const allowedInspectors = [
+    'ADRIAN JORDAN',
+    'MARK HOPCROFT',
+    'MO KHAN',
+    'ANTHONY HATCHER',
+    'MAHESH VERMA'
+  ];
+
   // States for sorting
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
 
@@ -16,29 +25,35 @@ function Results({ data }) {
   };
 
   // Sorting logic applied to data
-  const sortedData = Object.entries(data || {}).sort((a, b) => {
-    const [aInspector, aStats] = a;
-    const [bInspector, bStats] = b;
+  const sortedData = Object.entries(data || {})
+    // Filter out inspectors who are not in the allowed list
+    .filter(([inspector]) => allowedInspectors.includes(inspector))
+    // Sort based on the selected column and direction
+    .sort((a, b) => {
+      const [aInspector, aStats] = a;
+      const [bInspector, bStats] = b;
 
-    let comparison = 0;
-    if (sortConfig.key === 'inspector') {
-      comparison = aInspector.localeCompare(bInspector); // Alphabetical sort by name
-    } else if (sortConfig.key === 'totalJobs') {
-      comparison = aStats.totalJobs - bStats.totalJobs; // Numeric sort by total jobs
-    } else if (sortConfig.key === 'avgJobsPerDay') {
-      comparison = aStats.avgJobsPerDay - bStats.avgJobsPerDay; // Numeric sort by avg jobs
-    }
+      let comparison = 0;
+      if (sortConfig.key === 'inspector') {
+        comparison = aInspector.localeCompare(bInspector); // Alphabetical sort by name
+      } else if (sortConfig.key === 'totalJobs') {
+        comparison = aStats.totalJobs - bStats.totalJobs; // Numeric sort by total jobs
+      } else if (sortConfig.key === 'avgJobsPerDay') {
+        comparison = aStats.avgJobsPerDay - bStats.avgJobsPerDay; // Numeric sort by avg jobs
+      }
 
-    return sortConfig.direction === 'ascending' ? comparison : -comparison;
-  });
+      return sortConfig.direction === 'ascending' ? comparison : -comparison;
+    });
 
   // Download the data as an Excel file
   const handleDownload = () => {
     const wb = XLSX.utils.book_new();
     const wsData = [['Inspector', 'Total Jobs', 'Average Jobs Per Day']]; // Header row
-    Object.keys(data || {}).forEach((inspector) => {
-      wsData.push([inspector, data[inspector].totalJobs, data[inspector].avgJobsPerDay]);
-    });
+    Object.entries(data || {})
+      .filter(([inspector]) => allowedInspectors.includes(inspector)) // Ensure only filtered data is downloaded
+      .forEach(([inspector, stats]) => {
+        wsData.push([inspector, stats.totalJobs, stats.avgJobsPerDay]);
+      });
 
     const ws = XLSX.utils.aoa_to_sheet(wsData);
     XLSX.utils.book_append_sheet(wb, ws, 'Inspector Data');
@@ -82,7 +97,7 @@ function Results({ data }) {
         </tbody>
       </table>
 
-      <button onClick={handleDownload}>Download as XLSX</button>
+      {/* <button onClick={handleDownload}>Download as XLSX</button> */}
     </div>
   );
 }

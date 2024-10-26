@@ -1,4 +1,3 @@
-// src/components/Upload.js
 import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
 
@@ -19,10 +18,9 @@ function Upload({ onDataUpdate }) {
   };
 
   const processFiles = (files) => {
-    const inspectorCount = {};
-    const numberOfDays = files.length; // Treat each file as one day
+    const inspectorData = {};
 
-    Array.from(files).forEach((file) => {
+    Array.from(files).forEach((file, dayIndex) => {
       const reader = new FileReader();
 
       reader.onload = (event) => {
@@ -37,28 +35,38 @@ function Upload({ onDataUpdate }) {
             const inspector = row['Inspector'];
             const leg = row['Leg'];
 
-            if (inspector && leg === 'In 1/2') {
-              if (!inspectorCount[inspector]) {
-                inspectorCount[inspector] = 0;
+            // Include "In 1/1" and "In 1/2"
+            if (inspector && (leg === 'In 1/1' || leg === 'In 1/2')) {
+              // Initialize inspector's data if not already done
+              if (!inspectorData[inspector]) {
+                inspectorData[inspector] = {
+                  totalJobs: 0,
+                  activeDays: new Set(),
+                };
               }
-              inspectorCount[inspector]++;
+              // Increment job count
+              inspectorData[inspector].totalJobs++;
+              // Track the day (using `dayIndex` as a unique identifier for each spreadsheet/day)
+              inspectorData[inspector].activeDays.add(dayIndex);
             }
           });
         });
 
-        // After processing, calculate average jobs per day based on the number of files (days)
-        const inspectorData = {};
-        Object.keys(inspectorCount).forEach((inspector) => {
-          const totalJobs = inspectorCount[inspector];
-          const avgJobsPerDay = totalJobs / numberOfDays;
-          inspectorData[inspector] = {
+        // Calculate average jobs per day for each inspector
+        const processedData = Object.entries(inspectorData).reduce((acc, [inspector, stats]) => {
+          const totalJobs = stats.totalJobs;
+          const activeDaysCount = stats.activeDays.size; // Unique days worked
+          const avgJobsPerDay = activeDaysCount > 0 ? (totalJobs / activeDaysCount).toFixed(2) : 0;
+          
+          acc[inspector] = {
             totalJobs,
-            avgJobsPerDay: avgJobsPerDay.toFixed(2),
+            avgJobsPerDay: parseFloat(avgJobsPerDay), // Convert to float for display
           };
-        });
+          return acc;
+        }, {});
 
-        // Pass the inspector data back to the parent component
-        onDataUpdate(inspectorData);
+        // Pass processed data to the parent component
+        onDataUpdate(processedData);
       };
 
       reader.readAsArrayBuffer(file);
