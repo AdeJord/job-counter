@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { saveAs } from 'file-saver';
-import * as XLSX from 'xlsx';
+// import { saveAs } from 'file-saver';
+// import * as XLSX from 'xlsx';
 
 function Results({ data }) {
   // List of inspectors to include
