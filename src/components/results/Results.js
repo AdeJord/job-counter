@@ -12,8 +12,14 @@ function Results({ data }) {
     'MAHESH VERMA'
   ];
 
-  // States for sorting
+  // State for sorting and toggling views
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
+  const [showAllInspectors, setShowAllInspectors] = useState(true); // Toggle state: true shows all inspectors, false shows only allowed
+
+  // Toggle handler for the switch
+  const handleToggle = () => {
+    setShowAllInspectors(!showAllInspectors);
+  };
 
   // Sorting handler
   const sortData = (key) => {
@@ -24,45 +30,25 @@ function Results({ data }) {
     setSortConfig({ key, direction });
   };
 
-  // Sorting logic applied to data
-  const sortedData = Object.entries(data || {})
-    // Filter out inspectors who are not in the allowed list
-    .filter(([inspector]) => allowedInspectors.includes(inspector))
-    // Sort based on the selected column and direction
+  // Filter and sort the data based on the toggle and sortConfig
+  const filteredData = Object.entries(data || {})
+    .filter(([inspector]) => showAllInspectors || allowedInspectors.includes(inspector)) // Filter if showing only allowed inspectors
     .sort((a, b) => {
       const [aInspector, aStats] = a;
       const [bInspector, bStats] = b;
 
       let comparison = 0;
       if (sortConfig.key === 'inspector') {
-        comparison = aInspector.localeCompare(bInspector); // Alphabetical sort by name
+        comparison = aInspector.localeCompare(bInspector);
       } else if (sortConfig.key === 'totalJobs') {
-        comparison = aStats.totalJobs - bStats.totalJobs; // Numeric sort by total jobs
+        comparison = aStats.totalJobs - bStats.totalJobs;
       } else if (sortConfig.key === 'avgJobsPerDay') {
-        comparison = aStats.avgJobsPerDay - bStats.avgJobsPerDay; // Numeric sort by avg jobs
+        comparison = aStats.avgJobsPerDay - bStats.avgJobsPerDay;
       }
 
       return sortConfig.direction === 'ascending' ? comparison : -comparison;
     });
 
-  // Download the data as an Excel file
-//   const handleDownload = () => {
-//     const wb = XLSX.utils.book_new();
-//     const wsData = [['Inspector', 'Total Jobs', 'Average Jobs Per Day']]; // Header row
-//     Object.entries(data || {})
-//       .filter(([inspector]) => allowedInspectors.includes(inspector)) // Ensure only filtered data is downloaded
-//       .forEach(([inspector, stats]) => {
-//         wsData.push([inspector, stats.totalJobs, stats.avgJobsPerDay]);
-//       });
-
-//     const ws = XLSX.utils.aoa_to_sheet(wsData);
-//     XLSX.utils.book_append_sheet(wb, ws, 'Inspector Data');
-
-//     const xlsxBlob = XLSX.write(wb, { bookType: 'xlsx', type: 'blob' });
-//     saveAs(xlsxBlob, 'results.xlsx');
-//   };
-
-  // Check if there is any data before rendering the table
   if (!data || Object.keys(data).length === 0) {
     return <p>No data available. Please upload files to see the results.</p>;
   }
@@ -71,8 +57,18 @@ function Results({ data }) {
     <div>
       <h2>Inspector Job Count Results</h2>
 
+      {/* Toggle Switch */}
+      <label>
+        <input
+          type="checkbox"
+          checked={showAllInspectors}
+          onChange={handleToggle}
+        />
+        Show {showAllInspectors ? 'Allowed Inspectors Only' : 'All Inspectors'}
+      </label>
+
       {/* Data Table */}
-      <table border="1">
+      <table border="1" style={{ marginTop: '20px' }}>
         <thead>
           <tr>
             <th onClick={() => sortData('inspector')}>
@@ -87,7 +83,7 @@ function Results({ data }) {
           </tr>
         </thead>
         <tbody>
-          {sortedData.map(([inspector, stats]) => (
+          {filteredData.map(([inspector, stats]) => (
             <tr key={inspector}>
               <td>{inspector}</td>
               <td>{stats.totalJobs}</td>
